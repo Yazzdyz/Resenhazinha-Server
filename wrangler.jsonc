@@ -1,7 +1,7 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "resenhazinha-server",
-  "main": "src/index-v0.3.0.js",
+  "main": "src/index-v0.3.1.js",
   "compatibility_date": "2026-09-01",
   "workers_dev": true,
   "preview_urls": false,
