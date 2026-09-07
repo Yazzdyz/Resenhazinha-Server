@@ -41,7 +41,27 @@ function cleanClientId(value) {
   return /^[a-z0-9][a-z0-9._:-]{7,127}$/i.test(id) ? id : "";
 }
 
-export default worker;
+export default {
+  async fetch(request, env) {
+    const url = new URL(request.url);
+    if (url.pathname === "/profile-sync") {
+      return new Response(JSON.stringify({
+        ok: true,
+        service: "Resenhazinha Server",
+        profileSync: "0.2.1",
+        relay: true,
+        requestedOnReconnect: true,
+      }, null, 2), {
+        headers: {
+          "content-type": "application/json; charset=utf-8",
+          "access-control-allow-origin": "*",
+          "cache-control": "no-store",
+        },
+      });
+    }
+    return worker.fetch(request, env);
+  },
+};
 
 export class ResenhazinhaRoom extends BaseResenhazinhaRoom {
   async fetch(request) {
