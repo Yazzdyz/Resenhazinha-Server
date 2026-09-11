@@ -1,4 +1,4 @@
-const SERVICE_VERSION = "0.2.0";
+const SERVICE_VERSION = "0.4.0";
 const MAX_MEMBERS = 6;
 const MAX_CHAT_HISTORY = 500;
 const MAX_SERVER_ROLES = 20;
@@ -497,6 +497,8 @@ export class ResenhazinhaRoom {
 
     if (!clientId || !peerId) return json({ ok: false, error: "identity_required" }, 400);
 
+    const roomCreated = !this.room;
+
     if (!this.room) {
       if (mode !== "create") {
         const pair = new WebSocketPair();
@@ -551,12 +553,22 @@ export class ResenhazinhaRoom {
     const knownMember = Boolean(existingRecord);
 
     if (isOwner && this.room.ownerKey && !ownerKeyMatches) {
-      const pair = new WebSocketPair();
-      const [client, server] = Object.values(pair);
-      server.accept();
-      server.send(JSON.stringify({ type: "owner-auth-failed" }));
-      server.close(4003, "owner-auth-failed");
-      return new Response(null, { status: 101, webSocket: client });
+      const recoverOwner = url.searchParams.get("recoverOwner") === "1";
+      const ownerOnline = Boolean(this.findLiveByClientId(clientId));
+
+      // Recuperação segura para a mesma instalação do Owner. Isso é necessário
+      // depois da regressão 4.3.x, que deixou de persistir a ownerKey cloud.
+      if (recoverOwner && requestedOwnerKey && !ownerOnline) {
+        this.room.ownerKey = requestedOwnerKey;
+        await this.persist();
+      } else {
+        const pair = new WebSocketPair();
+        const [client, server] = Object.values(pair);
+        server.accept();
+        server.send(JSON.stringify({ type: "owner-auth-failed" }));
+        server.close(4003, "owner-auth-failed");
+        return new Response(null, { status: 101, webSocket: client });
+      }
     }
 
     if (!knownMember && inviteToken !== normalizeInviteToken(this.room.server.inviteToken)) {
@@ -615,6 +627,8 @@ export class ResenhazinhaRoom {
       deafened: false,
       inVoice: false,
       voiceJoinedAt: null,
+      voiceSessionId: "",
+      voicePresenceRevision: 0,
       presence,
       connectedAt: Date.now(),
     });
@@ -628,6 +642,7 @@ export class ResenhazinhaRoom {
       version: SERVICE_VERSION,
       owner: isOwner,
       roomInitialized: true,
+      created: roomCreated,
       inviteToken: isOwner ? this.room.server.inviteToken : undefined,
       at: Date.now(),
     });
