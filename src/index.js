@@ -1,4 +1,4 @@
-const SERVICE_VERSION = "0.4.0";
+const SERVICE_VERSION = "0.4.1";
 const MAX_MEMBERS = 6;
 const MAX_CHAT_HISTORY = 500;
 const MAX_SERVER_ROLES = 20;
