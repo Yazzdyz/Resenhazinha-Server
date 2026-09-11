@@ -168,8 +168,10 @@ export class ResenhazinhaRoom extends ResenhazinhaRoomV040 {
 
     // Se uma sessão nova do mesmo clientId já substituiu esta, o fechamento da
     // conexão antiga não pode apagar tela/presença da sessão nova.
-    const newerLive = clientId ? this.findLiveByClientId(clientId) : null;
-    if (newerLive && newerLive.ws !== ws) {
+    const newerLive = clientId
+      ? this.liveEntries().find((entry) => entry.ws !== ws && cleanClientId(entry.meta?.clientId) === clientId)
+      : null;
+    if (newerLive) {
       this.broadcastRoster(false);
       return;
     }
