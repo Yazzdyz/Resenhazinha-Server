@@ -148,11 +148,9 @@ export class ResenhazinhaRoom extends ResenhazinhaRoomV040 {
     }
 
     if (type === "join") {
-      // O roster chega primeiro; depois pedimos que todos reenviem avatar/banner.
-      // Isso evita transferências de perfil chegarem antes do membro existir no cliente novo.
-      this.ctx.waitUntil(new Promise((resolve) => setTimeout(resolve, 250)).then(() => {
-        this.requestProfileResync("member-joined");
-      }));
+      // O super já enviou o roster. WebSocket preserva ordem por conexão, então
+      // este pedido chega depois do roster e evita perder avatar/banner.
+      this.requestProfileResync("member-joined");
       return;
     }
 
